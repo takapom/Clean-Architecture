@@ -6,31 +6,34 @@ import (
 	"errors"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 var (
 	ErrInvalidDates  = errors.New("invalid dates: checkout must be after checkin")
 	ErrPlanNotFound  = errors.New("plan not found")
 	ErrInvalidNumber = errors.New("number must be >= 1")
-	ErrUserNotFound  = errors.New("user not found")
 	ErrInvalidUserID = errors.New("invalid user id")
+	ErrUserNotFound  = errors.New("user not found")
 )
 
 type ReservationUsecase struct {
+	Users repository.UserRepository
 	Plans repository.PlanRepository
 	Resv  repository.ReservationRepository
-	Users repository.UserRepository
 }
 
 // 　予約作成
 func (u *ReservationUsecase) Create(userID string, planID, number int, checkin, checkout time.Time) (*entity.Reservation, error) {
-	if strings.TrimSpace(userID) == "" {
+	userID = strings.TrimSpace(userID)
+	if userID == "" {
 		return nil, ErrInvalidUserID
 	}
-	if u.Users == nil {
-		return nil, errors.New("user repository is nil")
+	if _, err := uuid.Parse(userID); err != nil {
+		return nil, ErrInvalidUserID
 	}
-	user, err := u.Users.Get(strings.TrimSpace(userID))
+	user, err := u.Users.Get(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -44,12 +47,15 @@ func (u *ReservationUsecase) Create(userID string, planID, number int, checkin, 
 		return nil, ErrInvalidNumber
 	}
 	plan, err := u.Plans.FindByID(planID)
-	if err != nil || plan == nil {
+	if err != nil {
+		return nil, err
+	}
+	if plan == nil {
 		return nil, ErrPlanNotFound
 	}
 	r := &entity.Reservation{
 		ID:       u.Resv.NextID(),
-		UserID:   strings.TrimSpace(userID),
+		UserID:   user.ID,
 		PlanID:   planID,
 		Number:   number,
 		Checkin:  checkin,

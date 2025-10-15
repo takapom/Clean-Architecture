@@ -1,8 +1,13 @@
 erDiagram
     USERS {
-      int id PK
+      char36 id PK "users.id"
       varchar name
-      varchar email UK
+      varchar email UK "unique"
+      varchar phone_number
+      varchar address
+      date date_of_birth
+      datetime registered_at
+      varchar status
       datetime created_at
       datetime updated_at
     }
@@ -17,16 +22,16 @@ erDiagram
     }
 
     RESERVATIONS {
-      int id PK
-      int user_id FK
-      int plan_id FK
+      int id PK "reservations.id"
+      char36 user_id FK "-> users.id"
+      int plan_id FK "-> plans.id"
+      int number
       date checkin
       date checkout
-      int number
       int total
       datetime created_at
       datetime updated_at
     }
 
-    USERS ||--o{ RESERVATIONS : has
-    PLANS ||--o{ RESERVATIONS : includes
+    USERS ||--o{ RESERVATIONS : "users.id = reservations.user_id"
+    PLANS ||--o{ RESERVATIONS : "plans.id = reservations.plan_id"

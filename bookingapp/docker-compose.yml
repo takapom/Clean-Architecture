@@ -1,4 +1,5 @@
 version: "3.8"
+
 services:
   mysql:
     image: mysql:8.0
@@ -6,6 +7,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: booking
+      MYSQL_USER: booking
+      MYSQL_PASSWORD: bookingpass
       TZ: Asia/Tokyo
     ports:
       - "3306:3306"
@@ -14,9 +17,33 @@ services:
         "mysqld",
         "--default-authentication-plugin=mysql_native_password",
         "--character-set-server=utf8mb4",
-        "--collation-server=utf8mb4_0900_ai_ci",
+        "--collation-server=utf8mb4_0900_ai_ci"
       ]
     volumes:
       - mysql_data:/var/lib/mysql
+    networks:
+      - booking-net
+
+  api:
+    build: .
+    container_name: booking-api
+    environment:
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_USER: booking
+      DB_PASS: bookingpass
+      DB_NAME: booking
+      PORT: "8080"
+    depends_on:
+      - mysql
+    ports:
+      - "8080:8080"
+    networks:
+      - booking-net
+
 volumes:
   mysql_data: {}
+
+networks:
+  booking-net:
+    driver: bridge
